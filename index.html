@@ -228,8 +228,8 @@ h1 strong{font-weight:500;color:var(--accent)}
 .work-custom-example::before{content:'→';color:var(--accent);font-size:0.72rem;flex-shrink:0;margin-top:2px}
 
 /* ===================== HOW IT WORKS PAGE ===================== */
-.page-label{font-size:0.65rem;color:var(--accent);letter-spacing:0.25em;text-transform:uppercase;font-weight:400;margin-bottom:2rem;display:block}
-.page-title{font-family:'Outfit',sans-serif;font-size:clamp(3rem,6vw,5rem);font-weight:300;letter-spacing:-0.03em;line-height:1.05;margin-bottom:2.5rem;padding-bottom:0.1em}
+.page-label{font-size:0.8rem;color:var(--accent);letter-spacing:0.25em;text-transform:uppercase;font-weight:400;margin-bottom:2rem;display:block}
+.page-title{font-family:'Outfit',sans-serif;font-size:clamp(3.5rem,7vw,6rem);font-weight:300;letter-spacing:-0.03em;line-height:1.05;margin-bottom:2.5rem;padding-bottom:0.1em}
 .page-sub{color:var(--muted2);font-size:1rem;line-height:1.85;font-weight:300;max-width:520px}
 .work-hero{padding:12rem 4rem 7rem;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
 .work-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 30% 50%,rgba(0,229,176,0.04) 0%,transparent 70%);pointer-events:none}
@@ -278,7 +278,7 @@ h1 strong{font-weight:500;color:var(--accent)}
 .about-hero{padding:12rem 4rem 7rem;position:relative;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;gap:7rem;align-items:center;border-bottom:1px solid var(--border)}
 .about-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 20% 50%,rgba(0,229,176,0.04) 0%,transparent 70%);pointer-events:none}
 .about-hero-text{}
-.about-hero-text h2{font-family:'Outfit',sans-serif;font-size:clamp(3rem,5vw,5rem);font-weight:300;letter-spacing:-0.03em;line-height:1.0;margin-bottom:2.5rem}
+.about-hero-text h2{font-family:'Outfit',sans-serif;font-size:clamp(3.5rem,7vw,6rem);font-weight:300;letter-spacing:-0.03em;line-height:1.05;margin-bottom:2.5rem}
 .about-hero-text h2 span{color:var(--accent)}
 .about-hero-text p{color:var(--muted2);font-size:0.95rem;line-height:1.8;font-weight:300;margin-bottom:1.5rem}
 .about-card{background:var(--bg2);border:1px solid var(--border);padding:3rem;position:relative}
@@ -415,8 +415,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem 4rem;display:flex;align
   footer{padding:2rem 1.5rem;flex-direction:column;text-align:center}
   .footer-links{justify-content:center}
 
-  /* HERO */
-  .hero-stat-row{flex-wrap:wrap;gap:2rem}
+  .hero-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+  .stat-item{}
   h1{font-size:clamp(2.5rem,10vw,4rem)}
 
   /* PAGE TITLES */
