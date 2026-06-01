@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ai-sle — Smarter Supermarkets</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080A0C;
+  --bg2:#0D1117;
+  --bg3:#111820;
+  --border:#1A2530;
+  --accent:#00E5B0;
+  --text:#F0F4F8;
+  --muted:#4A6A7A;
+  --muted2:#7A9AAA;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;cursor:none;font-weight:300}
+a{text-decoration:none;color:inherit}
+
+.cursor{position:fixed;width:5px;height:5px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:transform 0.1s}
+.cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(0,229,176,0.3);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width 0.2s,height 0.2s,border-color 0.2s}
+.cursor.hovering{transform:translate(-50%,-50%) scale(0)}
+.cursor-ring.hovering{width:48px;height:48px;border-color:rgba(0,229,176,0.7);background:rgba(0,229,176,0.04)}
+
+/* SPOTLIGHT */
+.spotlight{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),rgba(0,229,176,0.04),transparent 40%)}
+
+/* GLOW CARDS */
+.glow-card{position:relative;overflow:hidden}
+.glow-card::before{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(400px circle at var(--cx,50%) var(--cy,50%),rgba(0,229,176,0.12),transparent 60%);opacity:0;transition:opacity 0.4s;pointer-events:none;z-index:0}
+.glow-card:hover::before{opacity:1}
+.glow-card>*{position:relative;z-index:1}
+
+/* WORD REVEAL */
+.reveal-text .word{display:inline-block;overflow:hidden;vertical-align:bottom}
+.reveal-text .word span{display:inline-block;transform:translateY(110%);opacity:0;transition:transform 0.7s cubic-bezier(0.16,1,0.3,1),opacity 0.5s ease}
+.reveal-text.revealed .word span{transform:translateY(0);opacity:1}
+
+/* SCROLL REVEAL */
+.scroll-reveal{opacity:0;transform:translateY(28px);transition:opacity 0.7s ease,transform 0.7s ease}
+.scroll-reveal.in-view{opacity:1;transform:translateY(0)}
+
+/* MAGNETIC BTN */
+.magnetic{display:inline-block;transition:transform 0.3s cubic-bezier(0.16,1,0.3,1)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.75rem 4rem;display:flex;align-items:center;justify-content:space-between;transition:all 0.4s}
+nav.scrolled{background:rgba(8,10,12,0.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:500;letter-spacing:0.02em;cursor:pointer}
+.logo span{color:var(--accent)}
+.nav-links{display:flex;gap:3rem;list-style:none}
+.nav-links a{color:var(--muted2);font-size:0.78rem;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s;cursor:pointer;position:relative;padding-bottom:2px}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--accent);transition:width 0.3s}
+.nav-links a:hover{color:var(--text)}
+.nav-links a.active{color:var(--accent)}
+.nav-links a.active::after{width:100%}
+.nav-cta{background:transparent;border:1px solid rgba(0,229,176,0.4);color:var(--accent);padding:0.55rem 1.4rem;font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.25s;border-radius:2px}
+.nav-cta:hover{background:rgba(0,229,176,0.08);border-color:var(--accent)}
+
+/* PAGE TRANSITIONS */
+.page{display:none;opacity:0;transform:translateY(12px);transition:opacity 0.45s ease,transform 0.45s ease}
+.page.active{display:block}
+.page.visible{opacity:1;transform:translateY(0)}
+
+/* SHARED */
+.section{padding:7rem 4rem}
+.section-label{font-size:0.68rem;color:var(--accent);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:1.25rem;font-weight:400}
+.section-title{font-family:'Outfit',sans-serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:300;letter-spacing:-0.02em;line-height:1.15;margin-bottom:1.25rem}
+.section-sub{color:var(--muted2);font-size:0.9rem;line-height:1.8;max-width:480px;font-weight:300}
+.btn-primary{background:var(--accent);color:#080A0C;padding:0.85rem 2.2rem;font-family:'Inter',sans-serif;font-weight:500;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;transition:all 0.25s;border-radius:2px;display:inline-block}
+.btn-primary:hover{background:#00ffcc;transform:translateY(-1px)}
+.btn-ghost{color:var(--muted2);font-size:0.82rem;cursor:pointer;background:none;border:none;display:inline-flex;align-items:center;gap:0.5rem;transition:color 0.2s;font-weight:300}
+.btn-ghost:hover{color:var(--text)}
+
+/* ===================== HOME PAGE ===================== */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:8rem 4rem 4rem;position:relative;overflow:hidden}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(26,37,48,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(26,37,48,0.5) 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black,transparent)}
+.hero-glow{position:absolute;top:-10%;left:-5%;width:55%;height:65%;background:radial-gradient(ellipse,rgba(0,229,176,0.05) 0%,transparent 65%);pointer-events:none}
+.hero-glow2{position:absolute;bottom:-15%;right:-5%;width:45%;height:55%;background:radial-gradient(ellipse,rgba(0,153,255,0.04) 0%,transparent 65%);pointer-events:none}
+.eyebrow{display:inline-flex;align-items:center;gap:0.6rem;font-size:0.68rem;color:var(--accent);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2.5rem;font-weight:400}
+.eyebrow-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:pulse 2.5s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+h1{font-family:'Outfit',sans-serif;font-size:clamp(3rem,6.5vw,5.5rem);font-weight:300;line-height:1.05;letter-spacing:-0.02em;margin-bottom:2rem}
+h1 strong{font-weight:500;color:var(--accent)}
+.hero-desc{max-width:440px;font-size:0.95rem;line-height:1.8;color:var(--muted2);margin-bottom:3rem;font-weight:300}
+.hero-actions{display:flex;align-items:center;gap:2rem}
+.hero-stat-row{display:flex;flex-wrap:wrap;gap:3rem 4rem;margin-top:5rem;padding-top:3rem;border-top:1px solid var(--border)}
+.stat-num{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:300;letter-spacing:-0.02em;display:flex;align-items:baseline;gap:2px}
+.stat-num em{color:var(--accent);font-style:normal;display:none}
+.stat-count{display:inline-block;min-width:2ch}
+.stat-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.3rem;font-weight:400}
+/* tick animation */
+@keyframes statTick{0%{transform:translateY(0);opacity:1}40%{transform:translateY(-8px);opacity:0}41%{transform:translateY(8px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* STAT BANNER */
+.stat-banner{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1rem 0;background:var(--bg);position:relative}
+.stat-banner::before,.stat-banner::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.stat-banner::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+.stat-banner::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
+.stat-banner-track{display:flex;align-items:center;gap:1.5rem;white-space:nowrap;animation:bannerScroll 45s linear infinite}
+.stat-banner-track:hover{animation-play-state:paused}
+.stat-banner-item{font-size:0.82rem;color:var(--muted2);font-weight:300;letter-spacing:0.02em;flex-shrink:0}
+.stat-banner-item em{color:var(--accent);font-style:normal;font-weight:500;margin-right:0.25rem}
+.stat-banner-dot{color:var(--border);font-size:1rem;flex-shrink:0}
+@keyframes bannerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* PROBLEM SECTION */
+.problem-section{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:5rem 4rem}
+.problem-statements{margin-top:3rem;display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.problem-statement{background:var(--bg);padding:1.75rem 3rem;display:grid;grid-template-columns:60px 1fr;gap:2rem;align-items:center;transition:background 0.3s;cursor:default}
+.problem-statement:hover{background:var(--bg2)}
+.problem-statement-num{font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:200;color:var(--border);line-height:1;transition:color 0.3s}
+.problem-statement:hover .problem-statement-num{color:var(--accent)}
+.problem-statement-text{font-family:'Outfit',sans-serif;font-size:clamp(1.1rem,2vw,1.5rem);font-weight:300;letter-spacing:-0.02em;line-height:1.2;color:var(--text)}
+.problem-footer{background:var(--bg2);padding:2.5rem 3rem;display:flex;align-items:center;justify-content:space-between;gap:3rem}
+.problem-footer-text{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:300;letter-spacing:-0.01em;line-height:1.5;max-width:600px}
+.problem-footer-text span{color:var(--accent)}
+
+/* TOOLS PREVIEW */
+.tools-preview{padding:7rem 4rem}
+.tools-split{display:flex;flex-direction:column;gap:1px;background:var(--border);margin-top:4rem}
+.tool-split-row{background:var(--bg);display:grid;grid-template-columns:1fr 1fr;gap:0;transition:background 0.3s;position:relative;overflow:hidden}
+.tool-split-row:hover{background:var(--bg2)}
+.tool-split-row::before{content:'';position:absolute;top:0;left:0;width:2px;height:0;background:var(--accent);transition:height 0.5s ease}
+.tool-split-row:hover::before{height:100%}
+.tool-split-row.reverse{direction:rtl}
+.tool-split-row.reverse>*{direction:ltr}
+.tool-split-left{padding:3.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center}
+.tool-split-right{padding:3.5rem;display:flex;flex-direction:column;justify-content:center}
+.tool-split-num{font-family:'Outfit',sans-serif;font-size:4rem;font-weight:200;color:var(--border);line-height:1;margin-bottom:1rem;transition:color 0.3s}
+.tool-split-row:hover .tool-split-num{color:var(--accent)}
+.tool-split-icon{font-size:2rem;margin-bottom:1rem;opacity:0.8}
+.tool-split-name{font-family:'Outfit',sans-serif;font-size:1.75rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:0.75rem;line-height:1.1}
+.tool-split-tag{display:inline-block;font-size:0.62rem;color:var(--accent);letter-spacing:0.15em;border:1px solid rgba(0,229,176,0.2);padding:0.25rem 0.75rem;font-weight:400;margin-bottom:0}
+.tool-split-desc{color:var(--muted2);font-size:0.9rem;line-height:1.8;font-weight:300;margin-bottom:1.75rem}
+.tool-split-features{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:2rem}
+.tool-split-feature{font-size:0.82rem;color:var(--muted2);font-weight:300;display:flex;align-items:flex-start;gap:0.75rem}
+.tool-split-feature::before{content:'→';color:var(--accent);font-size:0.72rem;flex-shrink:0;margin-top:2px}
+.tool-split-cta{display:inline-flex;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--accent);font-weight:400;letter-spacing:0.04em;cursor:pointer;transition:gap 0.2s}
+.tool-split-cta:hover{gap:0.85rem}
+
+/* HOW IT WORKS TEASER */
+.how-teaser{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:7rem 4rem}
+.how-teaser-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border);margin-top:4rem}
+.how-teaser-step{background:var(--bg2);padding:2.75rem;position:relative}
+.how-teaser-step-num{font-family:'Outfit',sans-serif;font-size:3rem;font-weight:200;color:var(--border);line-height:1;margin-bottom:1.5rem}
+.how-teaser-step-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:400;margin-bottom:0.6rem}
+.how-teaser-step-desc{color:var(--muted2);font-size:0.85rem;line-height:1.7;font-weight:300}
+.how-teaser-footer{display:flex;justify-content:flex-end;margin-top:2rem}
+
+/* CUSTOM WORKFLOWS */
+.custom-section{padding:7rem 4rem;border-top:1px solid var(--border)}
+.custom-inner{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-top:4rem}
+.custom-left{background:var(--bg);padding:3.5rem;position:relative;overflow:hidden}
+.custom-left::before{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.custom-left h3{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:300;letter-spacing:-0.02em;line-height:1.3;margin-bottom:1.25rem}
+.custom-left h3 span{color:var(--accent)}
+.custom-left p{color:var(--muted2);font-size:0.875rem;line-height:1.8;font-weight:300;margin-bottom:2rem}
+.custom-examples{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2.5rem}
+.custom-example{font-size:0.82rem;color:var(--muted2);font-weight:300;display:flex;align-items:flex-start;gap:0.75rem}
+.custom-example::before{content:'→';color:var(--accent);font-size:0.75rem;flex-shrink:0;margin-top:1px}
+.custom-right{background:var(--bg2);padding:3.5rem;display:flex;flex-direction:column;justify-content:space-between}
+.custom-right-label{font-size:0.65rem;color:var(--accent);letter-spacing:0.18em;text-transform:uppercase;font-weight:400;margin-bottom:1.25rem}
+.custom-right-title{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:400;letter-spacing:-0.01em;margin-bottom:1rem}
+.custom-right-desc{color:var(--muted2);font-size:0.85rem;line-height:1.75;font-weight:300;margin-bottom:2.5rem}
+.custom-process{display:flex;flex-direction:column;gap:1.25rem;margin-bottom:2.5rem}
+.custom-process-step{display:flex;align-items:flex-start;gap:1rem}
+.custom-process-num{font-family:'Outfit',sans-serif;font-size:0.7rem;color:var(--accent);font-weight:400;letter-spacing:0.1em;flex-shrink:0;padding-top:2px}
+.custom-process-text{font-size:0.82rem;color:var(--muted2);line-height:1.6;font-weight:300}
+
+/* CREDIBILITY */
+.cred-section{padding:7rem 4rem;position:relative;overflow:hidden}
+.cred-glow{position:absolute;top:0;right:0;width:40%;height:100%;background:radial-gradient(ellipse,rgba(0,229,176,0.03) 0%,transparent 70%);pointer-events:none}
+.cred-inner{display:grid;grid-template-columns:1fr 1fr;gap:7rem;align-items:center}
+.cred-quote{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:300;line-height:1.6;letter-spacing:-0.01em;margin-bottom:2rem}
+.cred-quote em{color:var(--accent);font-style:normal;font-weight:400}
+.cred-who{font-size:0.7rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;font-weight:400}
+.cred-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.cred-stat{background:var(--bg);padding:2.25rem;text-align:center}
+.cred-stat-num{font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:300;color:var(--accent);letter-spacing:-0.02em}
+.cred-stat-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.5rem;font-weight:400}
+
+/* CTA BANNER */
+.cta-banner{background:var(--bg3);border-top:1px solid var(--border);padding:7rem 4rem;position:relative;overflow:hidden}
+.cta-banner-glow{position:absolute;bottom:-30%;left:50%;transform:translateX(-50%);width:60%;height:80%;background:radial-gradient(ellipse,rgba(0,229,176,0.06) 0%,transparent 70%);pointer-events:none}
+.cta-banner-inner{text-align:center;position:relative}
+.cta-banner h2{font-family:'Outfit',sans-serif;font-size:clamp(2rem,4vw,3.5rem);font-weight:300;letter-spacing:-0.02em;margin-bottom:1.25rem;line-height:1.2}
+.cta-banner h2 span{color:var(--accent)}
+.cta-banner p{color:var(--muted2);font-size:0.9rem;max-width:420px;margin:0 auto 2.5rem;line-height:1.8;font-weight:300}
+.cta-banner-actions{display:flex;align-items:center;justify-content:center;gap:2rem}
+
+/* ===================== PRODUCTS PAGE ===================== */
+.work-hero{padding:10rem 4rem 6rem;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+.work-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 30% 50%,rgba(0,229,176,0.04) 0%,transparent 70%);pointer-events:none}
+.work-list{display:flex;flex-direction:column}
+.work-item{display:grid;grid-template-columns:1fr 2fr 1fr;gap:0;border-bottom:1px solid var(--border);padding:3.5rem 4rem;align-items:start;transition:background 0.3s;position:relative;overflow:hidden}
+.work-item:hover{background:var(--bg2)}
+.work-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform 0.4s ease}
+.work-item:hover::before{transform:scaleY(1)}
+.work-item-left{display:flex;flex-direction:column;gap:1rem}
+.work-item-num{font-family:'Outfit',sans-serif;font-size:0.65rem;color:var(--muted);letter-spacing:0.2em;font-weight:400}
+.work-item-icon{font-size:2.5rem;opacity:0.85}
+.work-item-tag{display:inline-block;font-size:0.6rem;color:var(--accent);letter-spacing:0.15em;border:1px solid rgba(0,229,176,0.2);padding:0.2rem 0.6rem;font-weight:400;align-self:flex-start}
+.work-item-center{}
+.work-item-name{font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:300;letter-spacing:-0.03em;line-height:1;margin-bottom:1.25rem}
+.work-item-desc{color:var(--muted2);font-size:0.9rem;line-height:1.8;font-weight:300;max-width:520px}
+.work-item-right{display:flex;flex-direction:column;gap:0.6rem;padding-top:0.5rem}
+.work-item-feature{font-size:0.78rem;color:var(--muted2);font-weight:300;display:flex;align-items:flex-start;gap:0.6rem;line-height:1.5}
+.work-item-feature::before{content:'';width:4px;height:4px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:6px}
+.work-custom{padding:5rem 4rem;background:var(--bg2);border-top:1px solid var(--border)}
+.work-custom-inner{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:center}
+.work-custom h3{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:300;letter-spacing:-0.02em;line-height:1.2;margin-bottom:1.25rem}
+.work-custom h3 span{color:var(--accent)}
+.work-custom p{color:var(--muted2);font-size:0.9rem;line-height:1.8;font-weight:300;margin-bottom:2rem}
+.work-custom-examples{display:flex;flex-direction:column;gap:0.75rem}
+.work-custom-example{font-size:0.82rem;color:var(--muted2);font-weight:300;display:flex;align-items:flex-start;gap:0.75rem}
+.work-custom-example::before{content:'→';color:var(--accent);font-size:0.72rem;flex-shrink:0;margin-top:2px}
+
+/* ===================== HOW IT WORKS PAGE ===================== */
+.page-label{font-size:0.65rem;color:var(--accent);letter-spacing:0.25em;text-transform:uppercase;font-weight:400;margin-bottom:2rem;display:block}
+.page-title{font-family:'Outfit',sans-serif;font-size:clamp(3rem,6vw,5rem);font-weight:300;letter-spacing:-0.03em;line-height:1.05;margin-bottom:2.5rem;padding-bottom:0.1em}
+.page-sub{color:var(--muted2);font-size:1rem;line-height:1.85;font-weight:300;max-width:520px}
+.work-hero{padding:12rem 4rem 7rem;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+.work-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 30% 50%,rgba(0,229,176,0.04) 0%,transparent 70%);pointer-events:none}
+.how-intro{padding:12rem 4rem 7rem;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+.pricing-intro{padding:12rem 4rem 7rem;position:relative;overflow:visible;border-bottom:1px solid var(--border)}
+.tech-hero{padding:12rem 4rem 7rem;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+.tech-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 60% 40%,rgba(0,153,255,0.04) 0%,transparent 70%);pointer-events:none}
+.steps-full{border-top:1px solid var(--border)}
+.step-full{display:grid;grid-template-columns:120px 1fr;gap:4rem;padding:4rem;border-bottom:1px solid var(--border);align-items:start;transition:background 0.3s}
+.step-full:hover{background:var(--bg2)}
+.step-full-num{font-family:'Outfit',sans-serif;font-size:4rem;font-weight:200;color:var(--border);line-height:1;padding-top:0.25rem}
+.step-full-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:400;letter-spacing:-0.01em;margin-bottom:1rem}
+.step-full-desc{color:var(--muted2);font-size:0.9rem;line-height:1.8;font-weight:300;max-width:600px;margin-bottom:1.5rem}
+.step-full-detail{display:flex;flex-direction:column;gap:0.6rem}
+.step-full-detail span{font-size:0.8rem;color:var(--muted2);font-weight:300;display:flex;align-items:center;gap:0.75rem}
+.step-full-detail span::before{content:'';width:4px;height:4px;background:var(--accent);border-radius:50%;flex-shrink:0}
+.how-cta{padding:6rem 4rem;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:3rem}
+.how-cta-text h3{font-family:'Outfit',sans-serif;font-size:1.75rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:0.75rem}
+.how-cta-text p{color:var(--muted2);font-size:0.875rem;line-height:1.7;font-weight:300;max-width:420px}
+
+/* ===================== PRICING PAGE ===================== */
+.pricing-cards{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);max-width:900px}
+.pricing-card{background:var(--bg);padding:3.5rem;position:relative}
+.pricing-card.featured{background:var(--bg3);border-top:1px solid var(--accent)}
+.pricing-badge{display:inline-block;font-size:0.62rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;border:1px solid rgba(0,229,176,0.2);padding:0.2rem 0.7rem;margin-bottom:2rem;font-weight:400}
+.pricing-type{font-size:0.65rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;font-weight:400}
+.pricing-amount{font-family:'Outfit',sans-serif;font-size:2.75rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:0.5rem}
+.pricing-amount span{font-size:0.9rem;color:var(--muted2);font-weight:300}
+.pricing-desc{color:var(--muted2);font-size:0.875rem;line-height:1.7;margin-bottom:2rem;font-weight:300}
+.pricing-includes{list-style:none;display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2.5rem}
+.pricing-includes li{font-size:0.82rem;color:var(--muted2);font-weight:300;display:flex;align-items:flex-start;gap:0.75rem}
+.pricing-includes li::before{content:'✓';color:var(--accent);font-size:0.75rem;flex-shrink:0;margin-top:1px}
+.pricing-note{font-size:0.68rem;color:var(--muted);letter-spacing:0.08em;font-weight:400}
+.pricing-faq{padding:5rem 4rem;border-top:1px solid var(--border)}
+.pricing-faq h3{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:3rem}
+.faq-list{display:flex;flex-direction:column;gap:0;max-width:680px}
+.faq-item{border-top:1px solid var(--border);padding:1.75rem 0;cursor:pointer}
+.faq-item:last-child{border-bottom:1px solid var(--border)}
+.faq-q{font-size:0.9rem;font-weight:400;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.faq-arrow{color:var(--accent);font-size:1rem;transition:transform 0.3s;flex-shrink:0}
+.faq-a{font-size:0.85rem;color:var(--muted2);line-height:1.8;font-weight:300;margin-top:1rem;display:none}
+.faq-item.open .faq-arrow{transform:rotate(45deg)}
+.faq-item.open .faq-a{display:block}
+
+/* ===================== ABOUT PAGE ===================== */
+.about-hero{padding:12rem 4rem 7rem;position:relative;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;gap:7rem;align-items:center;border-bottom:1px solid var(--border)}
+.about-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 20% 50%,rgba(0,229,176,0.04) 0%,transparent 70%);pointer-events:none}
+.about-hero-text{}
+.about-hero-text h2{font-family:'Outfit',sans-serif;font-size:clamp(3rem,5vw,5rem);font-weight:300;letter-spacing:-0.03em;line-height:1.0;margin-bottom:2.5rem}
+.about-hero-text h2 span{color:var(--accent)}
+.about-hero-text p{color:var(--muted2);font-size:0.95rem;line-height:1.8;font-weight:300;margin-bottom:1.5rem}
+.about-card{background:var(--bg2);border:1px solid var(--border);padding:3rem;position:relative}
+.about-card::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:linear-gradient(to bottom,var(--accent),transparent)}
+.about-card-label{font-size:0.65rem;color:var(--accent);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1.25rem;font-weight:400}
+.about-card-quote{font-family:'Outfit',sans-serif;font-size:1.15rem;font-weight:300;line-height:1.65;letter-spacing:-0.01em;margin-bottom:1.5rem}
+.about-card-who{font-size:0.7rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;font-weight:400}
+
+.about-story{padding:0 4rem 7rem;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.about-story-block{background:var(--bg);padding:3.5rem}
+.about-story-block h3{font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:400;letter-spacing:-0.01em;margin-bottom:1rem}
+.about-story-block p{color:var(--muted2);font-size:0.875rem;line-height:1.8;font-weight:300}
+
+.about-values{padding:0 4rem 7rem}
+.about-values h3{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:3rem}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.value-card{background:var(--bg2);padding:2.5rem}
+.value-icon{font-size:1.5rem;margin-bottom:1.25rem;opacity:0.8}
+.value-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:400;margin-bottom:0.6rem}
+.value-desc{color:var(--muted2);font-size:0.82rem;line-height:1.7;font-weight:300}
+
+.about-stores{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:5rem 4rem}
+.about-stores h3{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:3rem}
+.stores-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);max-width:700px}
+.store-card{background:var(--bg2);padding:2.5rem}
+.store-name{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:400;margin-bottom:0.5rem}
+.store-location{font-size:0.75rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;font-weight:400;margin-bottom:0.75rem}
+.store-desc{color:var(--muted2);font-size:0.82rem;line-height:1.7;font-weight:300}
+
+/* ===================== TECHNOLOGY PAGE ===================== */
+.tech-stack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:4rem}
+.tech-card{background:var(--bg);padding:3rem;position:relative;overflow:hidden;transition:background 0.3s}
+.tech-card:hover{background:var(--bg3)}
+.tech-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent);transform:scaleX(0);transform-origin:left;transition:transform 0.5s}
+.tech-card:hover::after{transform:scaleX(1)}
+.tech-card-icon{font-size:2rem;margin-bottom:1.5rem;opacity:0.85}
+.tech-card-name{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:400;letter-spacing:-0.01em;margin-bottom:0.6rem}
+.tech-card-role{font-size:0.65rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;font-weight:400;margin-bottom:1rem}
+.tech-card-desc{color:var(--muted2);font-size:0.85rem;line-height:1.7;font-weight:300}
+
+.tech-philosophy{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:6rem 4rem}
+.tech-philosophy-inner{display:grid;grid-template-columns:1fr 1fr;gap:7rem;align-items:start}
+.tech-philosophy h3{font-family:'Outfit',sans-serif;font-size:1.75rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:1.5rem;line-height:1.2}
+.tech-philosophy h3 span{color:var(--accent)}
+.tech-philosophy p{color:var(--muted2);font-size:0.9rem;line-height:1.8;font-weight:300;margin-bottom:1.25rem}
+.tech-principles{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.tech-principle{background:var(--bg2);padding:1.75rem 2rem;display:flex;gap:1.25rem;align-items:flex-start}
+.tech-principle-num{font-size:0.65rem;color:var(--accent);letter-spacing:0.15em;font-weight:400;flex-shrink:0;padding-top:3px}
+.tech-principle-text{}
+.tech-principle-title{font-size:0.9rem;font-weight:400;margin-bottom:0.3rem}
+.tech-principle-desc{font-size:0.82rem;color:var(--muted2);line-height:1.6;font-weight:300}
+
+.tech-security{padding:6rem 4rem}
+.tech-security-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);margin-top:4rem;max-width:860px}
+.tech-security-card{background:var(--bg);padding:2.5rem}
+.tech-security-icon{font-size:1.4rem;margin-bottom:1rem;opacity:0.8}
+.tech-security-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:400;margin-bottom:0.6rem}
+.tech-security-desc{color:var(--muted2);font-size:0.83rem;line-height:1.7;font-weight:300}
+
+/* ===================== CONTACT PAGE ===================== */
+.contact-page{padding:12rem 4rem 7rem;display:grid;grid-template-columns:1fr 1fr;gap:8rem;align-items:start;position:relative;overflow:hidden}
+.contact-bg{position:absolute;inset:0;background:radial-gradient(ellipse 40% 50% at 20% 50%,rgba(0,229,176,0.04) 0%,transparent 70%);pointer-events:none}
+.contact-info h2{font-family:'Outfit',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;letter-spacing:-0.02em;line-height:1.2;margin-bottom:1.5rem}
+.contact-info h2 span{color:var(--accent)}
+.contact-info p{color:var(--muted2);font-size:0.9rem;line-height:1.8;font-weight:300;margin-bottom:3rem;max-width:380px}
+.contact-details{display:flex;flex-direction:column;gap:1.5rem}
+.contact-detail-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;font-weight:400;margin-bottom:0.3rem}
+.contact-detail-value{font-size:0.9rem;color:var(--text);font-weight:300}
+.contact-detail-value a{color:var(--accent);transition:opacity 0.2s}
+.contact-detail-value a:hover{opacity:0.7}
+.contact-form{display:flex;flex-direction:column;gap:1.5rem}
+.form-group{display:flex;flex-direction:column;gap:0.5rem}
+.form-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;font-weight:400}
+.form-input,.form-textarea{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:0.9rem 1.1rem;font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:300;transition:border-color 0.2s;border-radius:2px;outline:none;width:100%}
+.form-input:focus,.form-textarea:focus{border-color:rgba(0,229,176,0.4)}
+.form-textarea{min-height:120px;resize:vertical}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--muted)}
+.form-submit{background:var(--accent);color:#080A0C;padding:0.9rem 2.2rem;font-family:'Inter',sans-serif;font-weight:500;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;transition:all 0.25s;border-radius:2px;align-self:flex-start}
+.form-submit:hover{background:#00ffcc;transform:translateY(-1px)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:2.5rem 4rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.footer-logo{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:500;letter-spacing:0.02em;cursor:pointer}
+.footer-logo span{color:var(--accent)}
+.footer-copy{font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;font-weight:300}
+.footer-links{display:flex;gap:2rem}
+.footer-links a{font-size:0.62rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;transition:color 0.2s;font-weight:400;cursor:pointer}
+.footer-links a:hover{color:var(--accent)}
+
+@media(max-width:900px){
+  nav{padding:1.25rem 1.5rem}
+  .nav-links{display:none}
+  .hero,.section,.problem-section,.tools-preview,.how-teaser,.cred-section,.cta-banner,.page-hero,.how-intro,.pricing-intro,.pricing-faq,.about-hero,.about-story,.about-values,.about-stores,.contact-page{padding-left:1.5rem;padding-right:1.5rem}
+  .hero{padding-top:6rem}
+  .hero-stat-row{flex-wrap:wrap;gap:2rem}
+  .problem-statement{grid-template-columns:40px 1fr;gap:1.5rem}
+  .problem-statement-meta{display:none}
+  .work-item{grid-template-columns:1fr;gap:1.5rem;padding:2rem 1.5rem}
+  .work-custom-inner,.work-hero-inner{grid-template-columns:1fr}
+  .tool-split-row{grid-template-columns:1fr}
+  .tool-split-row.reverse{direction:ltr}
+  .tool-split-left{border-right:none;border-bottom:1px solid var(--border)}
+  .how-teaser-steps,.cred-inner,.pricing-cards,.about-hero,.about-story,.values-grid,.stores-grid,.contact-page,.custom-inner,.tech-stack-grid,.tech-philosophy-inner,.tech-security-grid{grid-template-columns:1fr}
+  .step-full{grid-template-columns:60px 1fr;gap:1.5rem}
+  .how-cta{flex-direction:column}
+  footer{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  body{cursor:auto}
+  .cursor,.cursor-ring{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="spotlight" id="spotlight"></div>
+
+<nav id="nav">
+  <div class="logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('products')" data-page="products">Work</a></li>
+    <li><a onclick="showPage('how')" data-page="how">How we deliver</a></li>
+    <li><a onclick="showPage('pricing')" data-page="pricing">Pricing</a></li>
+    <li><a onclick="showPage('technology')" data-page="technology">Technology</a></li>
+    <li><a onclick="showPage('about')" data-page="about">About</a></li>
+  </ul>
+  <button class="nav-cta" onclick="showPage('contact')">Get started</button>
+</nav>
+
+<!-- ===== HOME ===== -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow2"></div>
+    <div class="eyebrow"><span class="eyebrow-dot"></span>Built for NZ supermarkets</div>
+    <h1>Smarter stores<br>start in the<br><strong>aisle.</strong></h1>
+    <p class="hero-desc">Ai-sle automates the back-office work that slows independent supermarkets down — built by a store owner, for store owners.</p>
+    <div class="hero-actions">
+      <button class="btn-primary magnetic" onclick="showPage('contact')">Book a demo</button>
+      <button class="btn-ghost" onclick="showPage('products')">See our tools →</button>
+    </div>
+    <div class="hero-stat-row">
+      <div class="stat-item">
+        <div class="stat-num"><span class="stat-count" data-target="2">2</span><span style="color:var(--accent)">+</span></div>
+        <div class="stat-label">Live FreshChoice stores</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="stat-count" data-target="10" data-suffix="+">10</span><span style="color:var(--accent)">+</span></div>
+        <div class="stat-label">Hours saved per store, per week</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="stat-count" data-target="100">100</span><span style="color:var(--accent)">%</span></div>
+        <div class="stat-label">NZ owned and operated</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="stat-count" data-from="10" data-target="0">0</span></div>
+        <div class="stat-label">IT knowledge needed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="stat-count" data-clock="true">0/0</span></div>
+        <div class="stat-label">Tools run while you sleep</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE PROBLEM -->
+  <div class="problem-section scroll-reveal">
+    <div class="section-label">The problem</div>
+    <div class="section-title">Every week, the same<br>tasks. By hand.</div>
+    <div class="problem-statements">
+      <div class="problem-statement">
+        
+        <div class="problem-statement-num">—</div><div class="problem-statement-text">Hours disappear into tasks that should take minutes.</div>
+      </div>
+      <div class="problem-statement">
+        
+        <div class="problem-statement-num">—</div><div class="problem-statement-text">Manual entry means mistakes. Mistakes have consequences.</div>
+      </div>
+      <div class="problem-statement">
+        
+        <div class="problem-statement-num">—</div><div class="problem-statement-text">Off-the-shelf software wasn't built for your store.</div>
+      </div>
+      <div class="problem-statement">
+        
+        <div class="problem-statement-num">—</div><div class="problem-statement-text">You're paying people to do what machines do better.</div>
+      </div>
+    </div>
+    <div class="problem-footer">
+      <div class="problem-footer-text">None of this is inevitable. <span>It's just not been automated yet.</span></div>
+      <button class="btn-ghost" onclick="showPage('contact')" style="white-space:nowrap;flex-shrink:0">See what we can automate →</button>
+    </div>
+  </div>
+
+  <!-- TOOL HIGHLIGHTS -->
+  <div class="tools-preview scroll-reveal">
+    <div class="section-label">What we build</div>
+    <div class="section-title">The tools that free up<br>your time.</div>
+    <div class="tools-split">
+
+      <div class="tool-split-row">
+        <div class="tool-split-left">
+          <div class="tool-split-num">01</div>
+          <div class="tool-split-icon">📋</div>
+          <div class="tool-split-name">Roster Builder</div>
+          <div class="tool-split-tag">Live in production</div>
+        </div>
+        <div class="tool-split-right">
+          <div class="tool-split-desc">Upload your weekly roster file and receive a polished, department-colour-coded PDF emailed to all staff automatically. What used to take an hour takes seconds.</div>
+          <div class="tool-split-features">
+            <div class="tool-split-feature">Reads Excel or PDF roster formats</div>
+            <div class="tool-split-feature">Colour-coded by department</div>
+            <div class="tool-split-feature">Emails all staff in one click</div>
+            <div class="tool-split-feature">Calculates daily and weekly hour totals</div>
+          </div>
+          <span class="tool-split-cta" onclick="showPage('products')">See full details →</span>
+        </div>
+      </div>
+
+      <div class="tool-split-row reverse">
+        <div class="tool-split-left">
+          <div class="tool-split-num">02</div>
+          <div class="tool-split-icon">📊</div>
+          <div class="tool-split-name">Variance Tracker</div>
+          <div class="tool-split-tag">Live in production</div>
+        </div>
+        <div class="tool-split-right">
+          <div class="tool-split-desc">Cross-references your invoice and variance report automatically. Flags only the lines staff need to physically check — everything else is resolved without you touching it.</div>
+          <div class="tool-split-features">
+            <div class="tool-split-feature">Reads variance PDF and invoice CSV</div>
+            <div class="tool-split-feature">Automatically resolves matched lines</div>
+            <div class="tool-split-feature">Outputs a clean Word doc for staff</div>
+            <div class="tool-split-feature">Saves hours of manual cross-checking</div>
+          </div>
+          <span class="tool-split-cta" onclick="showPage('products')">See full details →</span>
+        </div>
+      </div>
+
+      <div class="tool-split-row">
+        <div class="tool-split-left">
+          <div class="tool-split-num">03</div>
+          <div class="tool-split-icon">💰</div>
+          <div class="tool-split-name">Payroll Tool</div>
+          <div class="tool-split-tag">Live in production</div>
+        </div>
+        <div class="tool-split-right">
+          <div class="tool-split-desc">Pulls figures from your company trial balance and builds the weekly wage report automatically. One upload, done. Ready for review in under a minute.</div>
+          <div class="tool-split-features">
+            <div class="tool-split-feature">Reads trial balance export</div>
+            <div class="tool-split-feature">Adds a new sheet to the wage workbook</div>
+            <div class="tool-split-feature">Populates all figures correctly</div>
+            <div class="tool-split-feature">Ready for review in under a minute</div>
+          </div>
+          <span class="tool-split-cta" onclick="showPage('products')">See full details →</span>
+        </div>
+      </div>
+
+      <div class="tool-split-row reverse">
+        <div class="tool-split-left">
+          <div class="tool-split-num">04</div>
+          <div class="tool-split-icon">📈</div>
+          <div class="tool-split-name">KPI Dashboard</div>
+          <div class="tool-split-tag">Live in production</div>
+        </div>
+        <div class="tool-split-right">
+          <div class="tool-split-desc">Weekly KPI figures, GP calculations, and wastage data — all tracked in one place, built around how FreshChoice stores actually report. Flags variances automatically.</div>
+          <div class="tool-split-features">
+            <div class="tool-split-feature">Reads KPI PDF and wastage data</div>
+            <div class="tool-split-feature">Tracks GP and wastage week-on-week</div>
+            <div class="tool-split-feature">Clean spreadsheet output every week</div>
+            <div class="tool-split-feature">Flags variances automatically</div>
+          </div>
+          <span class="tool-split-cta" onclick="showPage('products')">See full details →</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CUSTOM WORKFLOWS -->
+  <div class="custom-section scroll-reveal">
+    <div class="section-label">Custom work</div>
+    <div class="section-title">Don't see what you need?<br>We'll build it.</div>
+    <p class="section-sub">Beyond our core tools, we design and build custom workflows and automations for any back-office problem your store has.</p>
+    <div class="custom-inner">
+      <div class="custom-left">
+        <h3>Every store has problems<br>that <span>off-the-shelf can't fix.</span></h3>
+        <p>Maybe it's a custom ordering report, a staff communication workflow, a supplier reconciliation process, or something completely unique to the way your store operates. If it's eating your time, we can automate it.</p>
+        <div class="custom-examples">
+          <div class="custom-example">Custom ordering and stock reconciliation reports</div>
+          <div class="custom-example">Automated supplier invoice processing</div>
+          <div class="custom-example">Staff communication and scheduling workflows</div>
+          <div class="custom-example">Department-specific GP and margin tracking</div>
+          <div class="custom-example">Wastage logging and reporting tools</div>
+          <div class="custom-example">Anything else that's wasting your time</div>
+        </div>
+        <button class="btn-primary magnetic" onclick="showPage('contact')">Tell us your problem →</button>
+      </div>
+      <div class="custom-right">
+        <div>
+          <div class="custom-right-label">How custom work works</div>
+          <div class="custom-right-title">From problem to solution, end to end.</div>
+          <div class="custom-right-desc">You tell us what's slowing you down. We scope it, build it, test it in your store, and hand it over — fully working, configured to your setup.</div>
+          <div class="custom-process">
+            <div class="custom-process-step">
+              <div class="custom-process-num">01</div>
+              <div class="custom-process-text"><strong style="font-weight:500;color:var(--text)">Discovery call</strong> — You walk us through the problem. We ask questions, understand your workflow, and figure out the best solution.</div>
+            </div>
+            <div class="custom-process-step">
+              <div class="custom-process-num">02</div>
+              <div class="custom-process-text"><strong style="font-weight:500;color:var(--text)">Scoping and quote</strong> — We send you a clear scope of work and a fixed price. No surprises.</div>
+            </div>
+            <div class="custom-process-step">
+              <div class="custom-process-num">03</div>
+              <div class="custom-process-text"><strong style="font-weight:500;color:var(--text)">Build and test</strong> — We build the tool, test it against your real data, and refine until it's right.</div>
+            </div>
+            <div class="custom-process-step">
+              <div class="custom-process-num">04</div>
+              <div class="custom-process-text"><strong style="font-weight:500;color:var(--text)">Handover</strong> — Your team is up and running. Ongoing support included in your subscription.</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-ghost" onclick="showPage('contact')">Book a discovery call →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS TEASER -->
+  <div class="how-teaser scroll-reveal">
+    <div class="section-label">How it works</div>
+    <div class="section-title">Set up once. Run forever.</div>
+    <p class="section-sub">We handle the technical side from start to finish. Your team just uses the tools.</p>
+    <div class="how-teaser-steps">
+      <div class="how-teaser-step">
+        <div class="how-teaser-step-num">01</div>
+        <div class="how-teaser-step-title">We audit your store</div>
+        <div class="how-teaser-step-desc">We start with a full audit of how your store currently operates — systems, workflows, reporting, and where time is being lost.</div>
+      </div>
+      <div class="how-teaser-step">
+        <div class="how-teaser-step-num">02</div>
+        <div class="how-teaser-step-title">Your team uses it daily</div>
+        <div class="how-teaser-step-desc">Upload a file, get a result. No training needed. Works on any device.</div>
+      </div>
+      <div class="how-teaser-step">
+        <div class="how-teaser-step-num">03</div>
+        <div class="how-teaser-step-title">We manage and improve it</div>
+        <div class="how-teaser-step-desc">Monthly subscription covers all updates, support, and new tools as we build them.</div>
+      </div>
+    </div>
+    <div class="how-teaser-footer">
+      <button class="btn-ghost" onclick="showPage('how')">See the full process →</button>
+    </div>
+  </div>
+
+  <!-- CREDIBILITY -->
+  <div class="cred-section scroll-reveal">
+    <div class="cred-glow"></div>
+    <div class="cred-inner">
+      <div>
+        <div class="section-label">Why trust us</div>
+        <div class="cred-quote">"I didn't build these tools to sell them. I built them because <em>I needed them</em> in my own stores."</div>
+        <div class="cred-who" style="margin-bottom:2rem">Saahil — Owner, FreshChoice Titirangi &amp; Hauraki</div>
+        <button class="btn-ghost" onclick="showPage('about')">Read our story →</button>
+      </div>
+      <div class="cred-stats">
+        <div class="cred-stat glow-card">
+          <div class="cred-stat-num">2</div>
+          <div class="cred-stat-label">FreshChoice stores owned</div>
+        </div>
+        <div class="cred-stat glow-card">
+          <div class="cred-stat-num">4</div>
+          <div class="cred-stat-label">Tools live in production</div>
+        </div>
+        <div class="cred-stat glow-card">
+          <div class="cred-stat-num">100%</div>
+          <div class="cred-stat-label">Built for independent grocers</div>
+        </div>
+        <div class="cred-stat glow-card">
+          <div class="cred-stat-num">NZ</div>
+          <div class="cred-stat-label">Owned &amp; operated</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA BANNER -->
+  <div class="cta-banner scroll-reveal">
+    <div class="cta-banner-glow"></div>
+    <div class="cta-banner-inner">
+      <h2>Ready to automate<br><span>your store?</span></h2>
+      <p>Book a free 30-minute demo and see exactly what Ai-sle can do for your supermarket.</p>
+      <div class="cta-banner-actions">
+        <button class="btn-primary magnetic" onclick="showPage('contact')">Book a demo →</button>
+        <button class="btn-ghost" onclick="showPage('pricing')">View pricing →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('contact')">Contact</a>
+      <a onclick="showPage('pricing')">Pricing</a>
+      <a onclick="showPage('about')">About</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PRODUCTS ===== -->
+<div class="page" id="page-products">
+  <div class="work-hero">
+    <div class="work-hero-bg"></div>
+    <div class="page-label">Work</div>
+    <h2 class="page-title">Tools built inside<br>a real supermarket.</h2>
+    <p class="page-sub">Every tool is live in production across our own FreshChoice stores before it's offered to anyone else. No prototypes, no guesswork.</p>
+  </div>
+
+  <div class="work-list">
+
+    <div class="work-item">
+      <div class="work-item-left">
+        <div class="work-item-num">01</div>
+        <div class="work-item-icon">📋</div>
+        <div class="work-item-tag">Live in production</div>
+      </div>
+      <div class="work-item-center">
+        <div class="work-item-name">Roster Builder</div>
+        <div class="work-item-desc">Upload your weekly roster file and receive a polished, department-colour-coded PDF emailed to all staff automatically. What used to take an hour takes seconds — every week, without fail.</div>
+      </div>
+      <div class="work-item-right">
+        <div class="work-item-feature">Reads Excel or PDF roster formats</div>
+        <div class="work-item-feature">Colour-coded by department</div>
+        <div class="work-item-feature">Emails all staff in one click</div>
+        <div class="work-item-feature">Calculates daily and weekly hour totals</div>
+      </div>
+    </div>
+
+    <div class="work-item">
+      <div class="work-item-left">
+        <div class="work-item-num">02</div>
+        <div class="work-item-icon">📊</div>
+        <div class="work-item-tag">Live in production</div>
+      </div>
+      <div class="work-item-center">
+        <div class="work-item-name">Variance Tracker</div>
+        <div class="work-item-desc">Cross-references your invoice and variance report automatically. Flags only the lines staff need to physically check — everything else is resolved without you touching it.</div>
+      </div>
+      <div class="work-item-right">
+        <div class="work-item-feature">Reads variance PDF and invoice CSV</div>
+        <div class="work-item-feature">Automatically resolves matched lines</div>
+        <div class="work-item-feature">Outputs a clean Word doc for staff</div>
+        <div class="work-item-feature">Saves hours of manual cross-checking</div>
+      </div>
+    </div>
+
+    <div class="work-item">
+      <div class="work-item-left">
+        <div class="work-item-num">03</div>
+        <div class="work-item-icon">💰</div>
+        <div class="work-item-tag">Live in production</div>
+      </div>
+      <div class="work-item-center">
+        <div class="work-item-name">Payroll Tool</div>
+        <div class="work-item-desc">Pulls figures from your company trial balance and builds the weekly wage report automatically. One upload, done. Ready for review in under a minute.</div>
+      </div>
+      <div class="work-item-right">
+        <div class="work-item-feature">Reads trial balance export</div>
+        <div class="work-item-feature">Adds a new sheet to the wage workbook</div>
+        <div class="work-item-feature">Populates all figures correctly</div>
+        <div class="work-item-feature">Ready for review in under a minute</div>
+      </div>
+    </div>
+
+    <div class="work-item">
+      <div class="work-item-left">
+        <div class="work-item-num">04</div>
+        <div class="work-item-icon">📈</div>
+        <div class="work-item-tag">Live in production</div>
+      </div>
+      <div class="work-item-center">
+        <div class="work-item-name">KPI Dashboard</div>
+        <div class="work-item-desc">Weekly KPI figures, GP calculations, and wastage data — all tracked in one place, built around how FreshChoice stores actually report. Flags variances automatically every week.</div>
+      </div>
+      <div class="work-item-right">
+        <div class="work-item-feature">Reads KPI PDF and wastage data</div>
+        <div class="work-item-feature">Tracks GP and wastage week-on-week</div>
+        <div class="work-item-feature">Clean spreadsheet output every week</div>
+        <div class="work-item-feature">Flags variances automatically</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="work-custom">
+    <div class="work-custom-inner">
+      <div>
+        <div class="page-label">Custom work</div>
+        <h3>Don't see what<br>you need? <span>We'll build it.</span></h3>
+        <p>Every store has problems that off-the-shelf can't fix. If it's eating your time every week, we can automate it — built specifically for how your store operates.</p>
+        <button class="btn-primary magnetic" onclick="showPage('contact')">Tell us your problem →</button>
+      </div>
+      <div class="work-custom-examples">
+        <div class="work-custom-example">Custom ordering and stock reconciliation reports</div>
+        <div class="work-custom-example">Automated supplier invoice processing</div>
+        <div class="work-custom-example">Staff communication and scheduling workflows</div>
+        <div class="work-custom-example">Department-specific GP and margin tracking</div>
+        <div class="work-custom-example">Wastage logging, reporting, and alerting</div>
+        <div class="work-custom-example">Anything else — if you can describe it, we can build it</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('contact')">Contact</a>
+      <a onclick="showPage('pricing')">Pricing</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== HOW IT WORKS ===== -->
+<div class="page" id="page-how">
+  <div class="how-intro">
+    <div class="page-label">How it works</div>
+    <h2 class="page-title">Set up once.<br>Run forever.</h2>
+    <p class="page-sub">We handle the technical setup, configuration, and ongoing management. Your team just uses the tools.</p>
+  </div>
+  <div class="steps-full">
+    <div class="step-full">
+      <div class="step-full-num">01</div>
+      <div class="step-full-content">
+        <div class="step-full-title">We audit your store</div>
+        <div class="step-full-desc">We start with a full audit of your store — how you currently operate, what systems you use, where time is being lost, and what your reporting looks like. From there we configure every tool to fit exactly how your store works, not the other way around.</div>
+        <div class="step-full-detail">
+          <span>Full review of your current systems and workflows</span>
+          <span>Identify where time is being lost each week</span>
+          <span>Every tool configured to your exact store setup</span>
+        </div>
+      </div>
+    </div>
+    <div class="step-full">
+      <div class="step-full-num">02</div>
+      <div class="step-full-content">
+        <div class="step-full-title">Your team uses it daily</div>
+        <div class="step-full-desc">Every tool is built around a simple upload-and-go workflow. Drop in a file, get a result. No training required, no technical knowledge needed.</div>
+        <div class="step-full-detail">
+          <span>Upload a file, get a result — that's it</span>
+          <span>Works on any device, any browser</span>
+          <span>No logins or dashboards to learn</span>
+        </div>
+      </div>
+    </div>
+    <div class="step-full">
+      <div class="step-full-num">03</div>
+      <div class="step-full-content">
+        <div class="step-full-title">We manage and improve it</div>
+        <div class="step-full-desc">Your monthly subscription means we're always in the background — keeping tools updated, responding to support requests, and building new automations as your store's needs evolve.</div>
+        <div class="step-full-detail">
+          <span>Ongoing updates and maintenance included</span>
+          <span>Support via email or phone</span>
+          <span>New tools added to your plan as we build them</span>
+        </div>
+      </div>
+    </div>
+    <div class="step-full">
+      <div class="step-full-num">04</div>
+      <div class="step-full-content">
+        <div class="step-full-title">Your store runs smoother</div>
+        <div class="step-full-desc">Hours of back-office work reduced to minutes. Staff spend less time on admin and more time on the floor. Built in a real supermarket, for the way you already work.</div>
+        <div class="step-full-detail">
+          <span>5+ hours saved per store, per week</span>
+          <span>Fewer errors in reporting and rostering</span>
+          <span>More time for what actually matters</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="how-cta">
+    <div class="how-cta-text">
+      <h3>Ready to see it in action?</h3>
+      <p>Book a free 30-minute demo and we'll walk you through exactly how each tool works for your store.</p>
+    </div>
+    <button class="btn-primary magnetic" onclick="showPage('contact')">Book a demo →</button>
+  </div>
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('contact')">Contact</a>
+      <a onclick="showPage('pricing')">Pricing</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PRICING ===== -->
+<div class="page" id="page-pricing">
+  <div class="pricing-intro">
+    <div class="page-label">Pricing</div>
+    <h2 class="page-title" style="line-height:1.15;padding-bottom:0.2em">Simple,<br>transparent pricing.</h2>
+    <p class="page-sub">A one-off setup fee per tool, then a monthly subscription that keeps everything running, updated, and improving.</p>
+  </div>
+  <div style="padding:0 4rem 5rem">
+    <div class="pricing-cards">
+      <div class="pricing-card glow-card">
+        <div class="pricing-type">Per tool — one off</div>
+        <div class="pricing-amount">Custom <span>/ setup</span></div>
+        <div class="pricing-desc">Each tool is scoped and priced based on your store's specific setup and requirements.</div>
+        <ul class="pricing-includes">
+          <li>Full configuration for your store</li>
+          <li>Staff list and departments built in</li>
+          <li>Testing and sign-off session</li>
+          <li>Handover and training included</li>
+        </ul>
+        <div class="pricing-note">Contact us for a quote →</div>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Recommended</div>
+        <div class="pricing-type">Monthly subscription</div>
+        <div class="pricing-amount">Custom <span>/ month</span></div>
+        <div class="pricing-desc">Covers everything needed to keep your tools running and improving over time.</div>
+        <ul class="pricing-includes">
+          <li>All tools maintained and updated</li>
+          <li>Priority email and phone support</li>
+          <li>New tools added as we build them</li>
+          <li>Changes to staff or departments</li>
+          <li>Cancel anytime — no lock-in</li>
+        </ul>
+        <div class="pricing-note">Pricing based on number of tools →</div>
+      </div>
+    </div>
+  </div>
+  <div class="pricing-faq">
+    <h3>Common questions</h3>
+    <div class="faq-list">
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Do I need any technical knowledge to use Ai-sle? <span class="faq-arrow">+</span></div>
+        <div class="faq-a">None at all. Every tool is built around a simple file upload workflow. If you can attach a file to an email, you can use Ai-sle.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">How long does setup take? <span class="faq-arrow">+</span></div>
+        <div class="faq-a">Most stores are up and running within a week. The initial configuration session takes 30–60 minutes, and we handle the rest from there.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">What if my store's setup changes — new staff, new departments? <span class="faq-arrow">+</span></div>
+        <div class="faq-a">That's covered in the monthly subscription. Just let us know and we'll update your tools. No extra charge for routine changes.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Is this only for FreshChoice stores? <span class="faq-arrow">+</span></div>
+        <div class="faq-a">We're starting with FreshChoice because that's where our tools were built and tested. We plan to expand to other independent grocery banners across NZ.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Can I cancel my subscription? <span class="faq-arrow">+</span></div>
+        <div class="faq-a">Yes, anytime. No lock-in contract. We're confident you'll want to stay once you see the time savings, but we'd never hold you to it.</div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('contact')">Contact</a>
+      <a onclick="showPage('how')">How we deliver</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== ABOUT ===== -->
+<div class="page" id="page-about">
+  <div class="about-hero">
+    <div class="about-hero-bg"></div>
+    <div class="about-hero-text">
+      <div class="page-label">About Ai-sle</div>
+      <h2 class="page-title">Built inside a<br><span style="color:var(--accent)">real supermarket.</span></h2>
+      <p style="color:var(--muted2);font-size:0.95rem;line-height:1.8;font-weight:300;margin-bottom:1.25rem">Ai-sle wasn't built by a software agency that studied the grocery industry. It was built by someone who owns two FreshChoice stores and got tired of doing the same manual tasks every week.</p>
+      <p style="color:var(--muted2);font-size:0.95rem;line-height:1.8;font-weight:300">Every tool started as a solution to a real problem in a real store. Now we're making those solutions available to every independent supermarket in New Zealand.</p>
+    </div>
+    <div class="about-card">
+      <div class="about-card-label">From the founder</div>
+      <div class="about-card-quote">"I used to spend hours every week on roster formatting, variance checking, and payroll entry. I knew there had to be a better way — so I built it. Now those same tasks take minutes, and I want every FreshChoice owner to have that time back."</div>
+      <div class="about-card-who">Saahil — Founder, Ai-sle<br>Owner, FreshChoice Titirangi &amp; Hauraki</div>
+    </div>
+  </div>
+
+  <div class="about-story">
+    <div class="about-story-block">
+      <h3>Where it started</h3>
+      <p>It started with the roster. Every week, the same process — exporting from the scheduling system, manually formatting a PDF, sending it to 20+ staff one by one. An hour of work that should take five minutes. So we automated it. Then we did the same for variance checking, payroll, and KPIs. Four tools later, Ai-sle was born.</p>
+    </div>
+    <div class="about-story-block">
+      <h3>Where we're going</h3>
+      <p>We're starting with FreshChoice because that's where we can be most useful — we know the systems, the reporting structure, and the pain points inside out. From there, we plan to expand across independent grocery in New Zealand, building tools that fit the way real stores actually operate.</p>
+    </div>
+  </div>
+
+  <div class="about-values">
+    <h3>What we stand for</h3>
+    <div class="values-grid">
+      <div class="value-card glow-card">
+        <div class="value-icon">🏪</div>
+        <div class="value-title">Built for real stores</div>
+        <div class="value-desc">Every tool is tested in a live supermarket before it's offered to anyone else. No prototypes, no guesswork.</div>
+      </div>
+      <div class="value-card glow-card">
+        <div class="value-icon">🤝</div>
+        <div class="value-title">Owner to owner</div>
+        <div class="value-desc">We're not a faceless software company. We're store owners talking to store owners. We understand your pressures because we have the same ones.</div>
+      </div>
+      <div class="value-card glow-card">
+        <div class="value-icon">🇳🇿</div>
+        <div class="value-title">Proudly NZ</div>
+        <div class="value-desc">Built, owned, and operated in New Zealand. When you call for support, you're talking to someone who knows the local grocery landscape.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-stores">
+    <h3>Our stores</h3>
+    <div class="stores-grid">
+      <div class="store-card glow-card">
+        <div class="store-name">FreshChoice Titirangi</div>
+        <div class="store-location">Auckland, NZ</div>
+        <div class="store-desc">Where Ai-sle's tools were first built and tested. Every automation running here before it goes anywhere else.</div>
+      </div>
+      <div class="store-card glow-card">
+        <div class="store-name">FreshChoice Hauraki</div>
+        <div class="store-location">Auckland, NZ</div>
+        <div class="store-desc">Our second store and the proving ground for every update and new tool we build.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('contact')">Contact</a>
+      <a onclick="showPage('products')">Work</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== TECHNOLOGY ===== -->
+<div class="page" id="page-technology">
+  <div class="tech-hero">
+    <div class="tech-hero-bg"></div>
+    <div class="page-label">Technology</div>
+    <h2 class="page-title">Battle-tested tools.<br>Built for real stores.</h2>
+    <p class="page-sub">Every tool in our stack has been through our own stores first. We don't experiment on your time — we adopt what works.</p>
+  </div>
+
+  <!-- TECH STACK -->
+  <div class="tech-stack-grid">
+    <div class="tech-card glow-card scroll-reveal">
+      <div class="tech-card-icon">🤖</div>
+      <div class="tech-card-name">Claude by Anthropic</div>
+      <div class="tech-card-role">AI Engine</div>
+      <div class="tech-card-desc">The AI model powering every Ai-sle tool. Claude is one of the most capable and reliable large language models available — it reads your files, understands context, and produces accurate, structured outputs every time. We chose Claude for its consistency and its ability to handle real-world document formats without hallucinating.</div>
+    </div>
+    <div class="tech-card glow-card scroll-reveal">
+      <div class="tech-card-icon">🐍</div>
+      <div class="tech-card-name">Python</div>
+      <div class="tech-card-role">Automation & Processing</div>
+      <div class="tech-card-desc">The backbone of every automation pipeline. Python handles file reading, data transformation, document generation, and the logic that connects your uploads to the final outputs. It's the most battle-tested language for data processing — reliable, fast, and capable of handling any file format your store uses.</div>
+    </div>
+    <div class="tech-card glow-card scroll-reveal">
+      <div class="tech-card-icon">📄</div>
+      <div class="tech-card-name">PDF & Document Generation</div>
+      <div class="tech-card-role">Output Layer</div>
+      <div class="tech-card-desc">Every tool produces a polished, ready-to-use output — whether that's a formatted PDF roster, a Word document for your variance check, or an Excel wage report. We use industry-standard libraries to generate documents that look professional and work straight away, with no manual formatting needed.</div>
+    </div>
+    <div class="tech-card glow-card scroll-reveal">
+      <div class="tech-card-icon">📧</div>
+      <div class="tech-card-name">Gmail Integration</div>
+      <div class="tech-card-role">Communications Layer</div>
+      <div class="tech-card-desc">Tools like the Roster Builder connect directly to Gmail to send outputs to your staff automatically. No copy-pasting, no manual sending — the tool handles the whole workflow from file upload to staff inbox. Built on Google's API so it's reliable, secure, and uses your existing email address.</div>
+    </div>
+    <div class="tech-card glow-card scroll-reveal">
+      <div class="tech-card-icon">📁</div>
+      <div class="tech-card-name">Google Drive & Excel</div>
+      <div class="tech-card-role">File Handling</div>
+      <div class="tech-card-desc">Your files stay in tools you already use. Uploads go via Google Drive or direct file input, and outputs land in Excel, Word, or PDF depending on the tool. No new software to learn, no new accounts to manage — everything works with the systems your store already runs on.</div>
+    </div>
+    <div class="tech-card glow-card scroll-reveal">
+      <div class="tech-card-icon">⚙️</div>
+      <div class="tech-card-name">Custom Pipelines</div>
+      <div class="tech-card-role">Automation Architecture</div>
+      <div class="tech-card-desc">Each tool is a purpose-built automation pipeline — not a generic template adapted for grocery. The pipeline reads your specific file format, applies your store's rules and structure, runs it through the AI layer, and produces the output. Built once, configured for your store, runs reliably every week without touching it.</div>
+    </div>
+  </div>
+
+  <!-- PHILOSOPHY -->
+  <div class="tech-philosophy">
+    <div class="tech-philosophy-inner">
+      <div>
+        <div class="page-label">Our approach</div>
+        <h3>We don't chase trends.<br>We use what <span>actually works.</span></h3>
+        <p>There's a lot of noise in AI right now. New tools, new models, new frameworks every week. We ignore most of it. Our stack is chosen for one reason: it works reliably in production, on real data, in a real supermarket environment.</p>
+        <p>Everything we use has been tested in our own stores before it goes anywhere near yours. If we wouldn't trust it with Titirangi or Hauraki, we won't offer it to you.</p>
+      </div>
+      <div class="tech-principles">
+        <div class="tech-principle">
+          <div class="tech-principle-num">01</div>
+          <div class="tech-principle-text">
+            <div class="tech-principle-title">Production first</div>
+            <div class="tech-principle-desc">Every tool runs in our own stores before it's offered to anyone else. No beta testing on your time.</div>
+          </div>
+        </div>
+        <div class="tech-principle">
+          <div class="tech-principle-num">02</div>
+          <div class="tech-principle-text">
+            <div class="tech-principle-title">Reliable over flashy</div>
+            <div class="tech-principle-desc">We pick tools that produce consistent, accurate outputs week after week — not the newest thing on the market.</div>
+          </div>
+        </div>
+        <div class="tech-principle">
+          <div class="tech-principle-num">03</div>
+          <div class="tech-principle-text">
+            <div class="tech-principle-title">No vendor lock-in</div>
+            <div class="tech-principle-desc">Your data stays yours. We build around tools you already use — Gmail, Excel, Google Drive. No proprietary platforms you'd be stuck on.</div>
+          </div>
+        </div>
+        <div class="tech-principle">
+          <div class="tech-principle-num">04</div>
+          <div class="tech-principle-text">
+            <div class="tech-principle-title">Simple on the outside</div>
+            <div class="tech-principle-desc">The complexity lives in the pipeline, not the interface. Your staff just uploads a file — the tech does the rest.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY & DATA -->
+  <div class="tech-security">
+    <div class="page-label">Security & data</div>
+    <div class="section-title">Your data is yours.<br>Full stop.</div>
+    <p class="section-sub">We take data handling seriously. Here's exactly how we treat your store's information.</p>
+    <div class="tech-security-grid">
+      <div class="tech-security-card glow-card">
+        <div class="tech-security-icon">🔒</div>
+        <div class="tech-security-title">No data stored</div>
+        <div class="tech-security-desc">Files you upload are processed and immediately discarded. We don't store your roster data, your payroll figures, or your variance reports. Each run is stateless — nothing persists after the output is generated.</div>
+      </div>
+      <div class="tech-security-card glow-card">
+        <div class="tech-security-icon">🛡️</div>
+        <div class="tech-security-title">Encrypted in transit</div>
+        <div class="tech-security-desc">All file uploads and outputs are transmitted over encrypted connections. Your data never travels over an unsecured channel, from upload to final output delivery.</div>
+      </div>
+      <div class="tech-security-card glow-card">
+        <div class="tech-security-icon">👤</div>
+        <div class="tech-security-title">Your accounts, your control</div>
+        <div class="tech-security-desc">Tools that connect to Gmail or Google Drive use your own credentials via Google's secure OAuth flow. We never see your password and access can be revoked by you at any time from your Google account settings.</div>
+      </div>
+      <div class="tech-security-card glow-card">
+        <div class="tech-security-icon">🇳🇿</div>
+        <div class="tech-security-title">NZ-based operation</div>
+        <div class="tech-security-desc">Ai-sle is a New Zealand business. We operate under NZ privacy law and the Privacy Act 2020. You know who you're dealing with — a store owner two calls away, not an anonymous overseas platform.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('contact')">Contact</a>
+      <a onclick="showPage('about')">About</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== CONTACT ===== -->
+<div class="page" id="page-contact">
+  <div class="contact-page">
+    <div class="contact-bg"></div>
+    <div class="contact-info">
+      <div class="page-label">Get in touch</div>
+      <h2>Let's talk about<br><span>your store.</span></h2>
+      <p>Book a free 30-minute demo and we'll walk you through exactly what Ai-sle can do for your supermarket. No commitment, no pressure.</p>
+      <div class="contact-details">
+        <div>
+          <div class="contact-detail-label">Email</div>
+          <div class="contact-detail-value"><a href="mailto:hello@aisle.co.nz">hello@aisle.co.nz</a></div>
+        </div>
+        <div>
+          <div class="contact-detail-label">Based in</div>
+          <div class="contact-detail-value">Auckland, New Zealand</div>
+        </div>
+        <div>
+          <div class="contact-detail-label">Response time</div>
+          <div class="contact-detail-value">Within 24 hours</div>
+        </div>
+      </div>
+    </div>
+    <div class="contact-form">
+      <div class="form-group">
+        <label class="form-label">Your name</label>
+        <input class="form-input" type="text" placeholder="e.g. John Smith">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Store name</label>
+        <input class="form-input" type="text" placeholder="e.g. FreshChoice Takapuna">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" placeholder="you@store.co.nz">
+      </div>
+      <div class="form-group">
+        <label class="form-label">What are you interested in?</label>
+        <textarea class="form-textarea" placeholder="Tell us which tools caught your eye, or just say hello..."></textarea>
+      </div>
+      <button class="form-submit">Send message →</button>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-logo" onclick="showPage('home')"><span>Ai</span>-sle</div>
+    <div class="footer-copy">© 2026 Ai-sle. New Zealand.</div>
+    <div class="footer-links">
+      <a onclick="showPage('products')">Work</a>
+      <a onclick="showPage('pricing')">Pricing</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+// ── CURSOR ──────────────────────────────────────────────
+const cursor=document.getElementById('cursor');
+const ring=document.getElementById('cursorRing');
+const spotlight=document.getElementById('spotlight');
+let mx=0,my=0,rx=0,ry=0;
+
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cursor.style.left=mx+'px';cursor.style.top=my+'px';
+  spotlight.style.setProperty('--mx',mx+'px');
+  spotlight.style.setProperty('--my',my+'px');
+  // Glow cards - update mouse position relative to each card
+  document.querySelectorAll('.glow-card').forEach(card=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--cx',(mx-r.left)+'px');
+    card.style.setProperty('--cy',(my-r.top)+'px');
+  });
+});
+
+(function animRing(){
+  rx+=(mx-rx)*0.1;ry+=(my-ry)*0.1;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+})();
+
+document.addEventListener('mouseover',e=>{
+  const isHoverable=e.target.closest('button,a,.tool-preview-card,.product-card,.step-full,.faq-item,.logo,.footer-logo,.store-card,.value-card,.pricing-card');
+  cursor.classList.toggle('hovering',!!isHoverable);
+  ring.classList.toggle('hovering',!!isHoverable);
+});
+
+// ── SPOTLIGHT OFF when mouse leaves window ───────────────
+document.addEventListener('mouseleave',()=>spotlight.style.opacity='0');
+document.addEventListener('mouseenter',()=>spotlight.style.opacity='1');
+
+// ── NAV SCROLL ──────────────────────────────────────────
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>50);
+  checkScrollReveals();
+});
+
+// ── WORD REVEAL ─────────────────────────────────────────
+function wrapWords(el){
+  if(!el) return;
+  // Reset if previously wrapped
+  if(el.dataset.wrapped === '1'){
+    el.dataset.wrapped = '';
+    el.classList.remove('revealed');
+  }
+  if(el.dataset.wrapped) return;
+  el.dataset.wrapped='1';
+  // Store original HTML once
+  if(!el.dataset.original) el.dataset.original = el.innerHTML;
+  else el.innerHTML = el.dataset.original;
+  el.innerHTML=el.innerHTML.replace(/(<[^>]+>)|([^<\s][^<]*)/g,(m,tag,text)=>{
+    if(tag)return tag;
+    return text.split(' ').map(w=>`<span class="word"><span>${w}</span></span>`).join(' ');
+  });
+  el.classList.add('reveal-text');
+}
+
+function revealWords(el,delay=0){
+  if(!el)return;
+  wrapWords(el);
+  const spans=el.querySelectorAll('.word span');
+  spans.forEach((s,i)=>{s.style.transitionDelay=`${delay+i*0.06}s`});
+  setTimeout(()=>el.classList.add('revealed'),50);
+}
+
+// ── SCROLL REVEALS ──────────────────────────────────────
+function checkScrollReveals(){
+  document.querySelectorAll('.page.active .scroll-reveal').forEach(el=>{
+    const r=el.getBoundingClientRect();
+    if(r.top<window.innerHeight*0.88)el.classList.add('in-view');
+  });
+}
+
+// ── PAGE SWITCHING ──────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('visible');
+    setTimeout(()=>{p.classList.remove('active');p.style.display='none';},420);
+  });
+  setTimeout(()=>{
+    const target=document.getElementById('page-'+id);
+    target.style.display='block';
+    target.classList.add('active');
+    setTimeout(()=>{
+      target.classList.add('visible');
+      // Reveal heading words
+      // Reset and re-trigger word reveal on every visit
+      target.querySelectorAll('.reveal-text').forEach(el=>{
+        el.classList.remove('revealed');
+        el.dataset.wrapped = '';
+      });
+      target.querySelectorAll('h1, h2, .page-title, .work-hero h2, .about-hero-text h2').forEach((h,i)=>revealWords(h, i*0.12));
+      checkScrollReveals();
+      revealCards(target);
+    },30);
+    window.scrollTo({top:0,behavior:'instant'});
+    document.querySelectorAll('.nav-links a').forEach(a=>a.classList.toggle('active',a.dataset.page===id));
+  },430);
+}
+
+// ── CARD STAGGER ────────────────────────────────────────
+function revealCards(container){
+  const els=container.querySelectorAll('.product-card,.step-full,.pricing-card,.faq-item,.cred-stat,.problem-statement,.tool-preview-card,.how-teaser-step,.value-card,.store-card,.about-story-block,.custom-process-step,.tech-card,.tech-security-card,.tech-principle');
+  els.forEach((el,i)=>{
+    el.style.opacity='0';el.style.transform='translateY(18px)';
+    el.style.transition=`opacity 0.65s ease ${i*0.07}s,transform 0.65s ease ${i*0.07}s`;
+    setTimeout(()=>{el.style.opacity='1';el.style.transform='translateY(0)';},60);
+  });
+}
+
+// ── MAGNETIC BUTTONS ────────────────────────────────────
+document.addEventListener('mousemove',e=>{
+  document.querySelectorAll('.magnetic').forEach(btn=>{
+    const r=btn.getBoundingClientRect();
+    const cx=r.left+r.width/2;
+    const cy=r.top+r.height/2;
+    const dist=Math.hypot(e.clientX-cx,e.clientY-cy);
+    if(dist<80){
+      const pull=0.35;
+      btn.style.transform=`translate(${(e.clientX-cx)*pull}px,${(e.clientY-cy)*pull}px)`;
+    }else{
+      btn.style.transform='translate(0,0)';
+    }
+  });
+});
+
+// ── FAQ ─────────────────────────────────────────────────
+// ── STAT ANIMATIONS ─────────────────────────────────────
+function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+
+function countUp(el, from, to, duration){
+  const start = performance.now();
+  function update(now){
+    const p = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round(from + easeOutCubic(p) * (to - from));
+    if(p < 1) requestAnimationFrame(update);
+    else el.textContent = to;
+  }
+  requestAnimationFrame(update);
+}
+
+function countClock(el, duration){
+  // counts 0/0 → 24/7 smoothly
+  const start = performance.now();
+  function update(now){
+    const p = Math.min((now - start) / duration, 1);
+    const e = easeOutCubic(p);
+    const h = Math.round(e * 24);
+    const d = Math.round(e * 7);
+    el.textContent = h + '/' + d;
+    if(p < 1) requestAnimationFrame(update);
+    else el.textContent = '24/7';
+  }
+  requestAnimationFrame(update);
+}
+
+function slideWord(el, fromWord, toWord, duration){
+  // smooth crossfade from one word to the next
+  el.style.transition = `opacity ${duration/2}ms ease, transform ${duration/2}ms ease`;
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(-8px)';
+  setTimeout(()=>{
+    el.textContent = toWord;
+    el.style.transform = 'translateY(8px)';
+    setTimeout(()=>{
+      el.style.transform = 'translateY(0)';
+      el.style.opacity = '1';
+    }, 50);
+  }, duration/2);
+}
+
+function runStats(){
+  document.querySelectorAll('.stat-count').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    const from = parseInt(el.dataset.from ?? 0);
+
+    if(el.dataset.clock){
+      countClock(el, 2000);
+      return;
+    }
+    if(el.dataset.words){
+      const words = el.dataset.words.split(',');
+      // start on first word then slide to last
+      el.textContent = words[0];
+      setTimeout(()=> slideWord(el, words[0], words[1], 800), 1200);
+      return;
+    }
+    // numeric
+    countUp(el, from, target, 1800);
+  });
+}
+
+// Trigger when stat row enters view
+const statRow = document.querySelector('.hero-stat-row');
+let statsDone = false;
+const statObserver = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting && !statsDone){
+      statsDone = true;
+      runStats();
+      // loop every 8s
+      setInterval(()=>{
+        document.querySelectorAll('.stat-count').forEach(el=>{
+          const target = parseInt(el.dataset.target);
+          const from = parseInt(el.dataset.from ?? 0);
+          if(el.dataset.clock){ countClock(el, 2000); return; }
+          if(el.dataset.words){
+            const words = el.dataset.words.split(',');
+            el.style.opacity='1'; el.style.transform='translateY(0)';
+            el.textContent = words[0];
+            setTimeout(()=>slideWord(el, words[0], words[1], 800), 1200);
+            return;
+          }
+          countUp(el, from, target, 1800);
+        });
+      }, 8000);
+    }
+  });
+},{threshold:0.5});
+if(statRow) statObserver.observe(statRow);
+
+
+// ── INIT ─────────────────────────────────────────────────
+const homePage=document.getElementById('page-home');
+homePage.classList.add('visible');
+// Word reveal on hero headings
+document.querySelectorAll('#page-home h1').forEach(h=>revealWords(h,0.3));
+revealCards(homePage);
+setTimeout(checkScrollReveals,200);
+
+function toggleTool(row){
+  const isOpen=row.classList.contains('open');
+  document.querySelectorAll('.tool-expand-row.open').forEach(r=>r.classList.remove('open'));
+  if(!isOpen) row.classList.add('open');
+}
+
+function toggleFaq(el){el.classList.toggle('open');}
+</script>
+</body>
+</html>
